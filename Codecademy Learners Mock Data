@@ -1,0 +1,145 @@
+SELECT *
+FROM users
+LIMIT 10;
+
+SELECT *
+FROM progress
+LIMIT 10;
+
+-- Top 25 schools using Codecademy
+SELECT email_domain,
+  COUNT(*) as 'Domain Users'
+FROM users
+GROUP BY email_domain
+ORDER BY 2 DESC
+limit 25;
+
+-- Amount of learners located in NY
+SELECT COUNT(*) AS 'New York users'
+FROM users
+WHERE city = 'New York';
+-- 50 Learners located in New York
+
+-- Amount of users using the mobile app
+SELECT COUNT(*) as 'Mobile App Users'
+from users
+WHERE mobile_app = 'mobile-user';
+-- 330 Users use the mobile app
+
+-- Calculating how many users signed up for each hour
+SELECT strftime('%H', sign_up_at) as 'Hour',
+   COUNT(*) as 'Total'
+FROM users
+GROUP BY 1;
+
+-- Joining the tables together
+WITH bigdata AS (
+  SELECT *
+  FROM progress
+  JOIN users
+  ON progress.user_id = users.user_id)
+SELECT *
+FROM bigdata
+LIMIT 10;
+
+-- Finding out what courses are the most complete and being learned
+WITH bigdata AS (
+  SELECT *
+  FROM progress
+  JOIN users
+  ON progress.user_id = users.user_id)
+SELECT (
+   SELECT COUNT(*)
+    FROM bigdata
+    WHERE learn_cpp is 'completed') AS 'Completed CPP',
+  (SELECT COUNT(*)
+    FROM bigdata
+    WHERE learn_cpp is 'started') AS 'Started CPP',
+  (SELECT COUNT(*)
+    FROM bigdata
+    WHERE learn_sql is 'completed') AS 'Completed SQL',
+  (SELECT COUNT(*)
+    FROM bigdata
+    WHERE learn_sql is 'started') AS 'Started SQL',
+  (SELECT COUNT(*)
+    FROM bigdata
+    WHERE learn_html is 'completed') AS 'Completed HTML',
+  (SELECT COUNT(*)
+    FROM bigdata
+    WHERE learn_html is 'started') AS 'Started HTML',
+  (SELECT COUNT(*)
+    FROM bigdata
+    WHERE learn_javascript is 'completed') AS 'Completed Javascript',
+  (SELECT COUNT(*)
+    FROM bigdata
+     WHERE learn_javascript is 'started') AS 'Started Javascript',
+  (SELECT COUNT(*)
+    FROM bigdata
+    WHERE learn_java is 'completed') AS 'Completed Java',
+  (SELECT COUNT(*)
+    FROM bigdata
+    WHERE learn_java is 'started') AS 'Started Java';
+
+--  Seeing which courses are more populare at different schools
+SELECT
+    users.email_domain AS 'School',
+    COUNT(*) AS NoStudents,
+    SUM(CASE WHEN progress.learn_cpp != '' THEN 1 ELSE 0 END) AS LearnCppCount,
+    SUM(CASE WHEN progress.learn_sql != '' THEN 1 ELSE 0 END) AS LearnSqlCount,
+    SUM(CASE WHEN progress.learn_html != '' THEN 1 ELSE 0 END) AS LearnHtmlCount,
+    SUM(CASE WHEN progress.learn_javascript != '' THEN 1 ELSE 0 END) AS LearnJavascriptCount,
+    SUM(CASE WHEN progress.learn_java != '' THEN 1 ELSE 0 END) AS LearnJavaCount
+FROM users JOIN progress ON users.user_id = progress.user_id
+GROUP BY users.email_domain
+ORDER BY 2 DESC
+LIMIT 25;
+
+
+-- Same as above but in percentages
+WITH summary AS (
+  SELECT
+    users.email_domain as 'School',
+    count(*) as NoStudents,
+    sum(case when progress.learn_cpp != '' then 1 else 0 end) as LearnCppCount,
+    sum(case when progress.learn_sql != '' then 1 else 0 end) as LearnSqlCount,
+    sum(case when progress.learn_html != '' then 1 else 0 end) as LearnHtmlCount,
+    sum(case when progress.learn_javascript != '' then 1 else 0 end) as LearnJavascriptCount,
+    sum(case when progress.learn_java != '' then 1 else 0 end) as LearnJavaCount
+  FROM users JOIN progress ON users.user_id = progress.user_id
+  group by users.email_domain
+  order by 2 desc
+)
+SELECT School,
+  round(((1.0 * LearnCppCount / NoStudents)*100),2) as PercentCpp,
+  round(((1.0 * LearnSqlCount / NoStudents)*100),2) as PercentSQL,
+  round(((1.0 * LearnHtmlCount / NoStudents)*100),2) as PercentHTML,
+  round(((1.0 * LearnJavascriptCount / NoStudents)*100),2) as PercentJavascript,
+  round(((1.0 * LearnJavaCount / NoStudents)*100),2) as PercentHJava
+FROM summary
+LIMIT 25;
+
+-- Courses taken by New York Students
+SELECT
+  users.email_domain AS 'School',
+  COUNT(*) AS NoStudents,
+  SUM(CASE WHEN progress.learn_cpp != '' THEN 1 ELSE 0 END) AS LearnCppCount,
+  SUM(CASE WHEN progress.learn_sql != '' THEN 1 ELSE 0 END) AS LearnSqlCount,
+  SUM(CASE WHEN progress.learn_html != '' THEN 1 ELSE 0 END) AS LearnHtmlCount,
+  SUM(CASE WHEN progress.learn_javascript != '' THEN 1 ELSE 0 END) AS LearnJavascriptCount,
+  SUM(CASE WHEN progress.learn_java != '' THEN 1 ELSE 0 END) AS LearnJavaCount
+FROM users JOIN progress ON users.user_id = progress.user_id
+WHERE users.city = 'New York'
+ORDER BY 2 DESC;
+
+--Courses taken by Chicago Students
+SELECT
+  users.email_domain AS 'School',
+  COUNT(*) AS NoStudents,
+  SUM(CASE WHEN progress.learn_cpp != '' THEN 1 ELSE 0 END) AS LearnCppCount,
+  SUM(CASE WHEN progress.learn_sql != '' THEN 1 ELSE 0 END) AS LearnSqlCount,
+  SUM(CASE WHEN progress.learn_html != '' THEN 1 ELSE 0 END) AS LearnHtmlCount,
+  SUM(CASE WHEN progress.learn_javascript != '' THEN 1 ELSE 0 END) AS LearnJavascriptCount,
+  SUM(CASE WHEN progress.learn_java != '' THEN 1 ELSE 0 END) AS LearnJavaCount
+FROM users JOIN progress ON users.user_id = progress.user_id
+WHERE users.city = 'Chicago'
+ORDER BY 2 DESC;
